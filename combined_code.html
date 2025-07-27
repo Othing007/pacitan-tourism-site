@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pacitan Tourism</title>
+<!-- Leaflet CSS & JS (already loaded via CodePen settings) -->
+<style>
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+header {
+  background: #0099cc;
+  color: #fff;
+  padding: 10px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+nav ul li {
+  margin-left: 15px;
+}
+
+nav ul li a {
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+nav ul li a:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.section {
+  padding: 20px;
+}
+
+/* Slider styles */
+.slider {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  background: #ccc;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  background-size: cover;
+  background-position: center;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.slide-overlay {
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 10px;
+}
+
+/* Quick search */
+.quick-search {
+  display: flex;
+  margin: 10px 0;
+}
+
+.quick-search input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px 0 0 4px;
+}
+
+.quick-search button {
+  padding: 8px 16px;
+  border: none;
+  background: #0099cc;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Destination cards */
+.dest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.dest-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dest-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.dest-card .content {
+  padding: 10px;
+  flex: 1;
+}
+
+.dest-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.dest-card p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.dest-card .actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+}
+
+.dest-card button {
+  padding: 6px 12px;
+  border: none;
+  background: #0099cc;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.dest-card button.favorite {
+  background: #e67e22;
+}
+
+/* Category cards */
+.category-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.category-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+}
+
+.category-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.category-card .content {
+  padding: 10px;
+}
+
+/* Event list */
+.event-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.event-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-content .close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Contact form */
+#contactForm {
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+}
+
+#contactForm input,
+#contactForm textarea {
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#contactForm button {
+  padding: 8px 16px;
+  border: none;
+  background: #0099cc;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<header>
+<h1>Portal Wisata Pacitan</h1>
+<nav id="navbar">
+<ul>
+<li><a href="#home">Beranda</a></li>
+<li><a href="#destinations">Destinasi</a></li>
+<li><a href="#mapSection">Peta</a></li>
+<li><a href="#categories">Kategori</a></li>
+<li><a href="#favourites">Favorit</a></li>
+<li><a href="#events">Event</a></li>
+<li><a href="#about">Tentang Kami</a></li>
+<li><a href="#contact">Kontak</a></li>
+</ul>
+</nav>
+</header>
+<!-- Home Section with Slider -->
+<section class="section" id="home">
+<div class="slider" id="slider">
+<!-- Slides will be injected by JS -->
+</div>
+<div class="quick-search">
+<input id="quickSearchInput" placeholder="Cari destinasi..." type="text"/>
+<button id="quickSearchBtn">Cari</button>
+</div>
+<div class="weather-info" id="weatherInfo">
+<!-- Placeholder for weather info per destination; dynamic based on selection -->
+</div>
+</section>
+<!-- Destinations Section -->
+<section class="section" id="destinations">
+<h2>Destinasi Wisata</h2>
+<div class="filters">
+<select id="categoryFilter">
+<option value="all">Semua Kategori</option>
+<option value="Pantai">Pantai</option>
+<option value="Goa">Goa</option>
+<option value="Air Terjun">Air Terjun</option>
+<option value="Budaya">Wisata Budaya</option>
+</select>
+<input id="destSearchInput" placeholder="Cari destinasi..." type="text"/>
+</div>
+<div class="dest-list" id="destList"></div>
+</section>
+<!-- Map Section -->
+<section class="section" id="mapSection">
+<h2>Peta Interaktif</h2>
+<div id="map" style="height: 400px; width: 100%"></div>
+</section>
+<!-- Categories Section -->
+<section class="section" id="categories">
+<h2>Kategori Wisata</h2>
+<div class="category-cards" id="categoryCards">
+<!-- Category cards inserted by JS -->
+</div>
+</section>
+<!-- Favourites Section -->
+<section class="section" id="favourites">
+<h2>Favorit Saya</h2>
+<div class="dest-list" id="favList"></div>
+</section>
+<!-- Events Section -->
+<section class="section" id="events">
+<h2>Event &amp; Festival</h2>
+<div class="event-list" id="eventList"></div>
+</section>
+<!-- About Section -->
+<section class="section" id="about">
+<h2>Tentang Kami</h2>
+<p>
+        Portal ini dikembangkan untuk memudahkan wisatawan menjelajahi
+        destinasi-destinasi indah di Kabupaten Pacitan. Kami berkomitmen
+        menyediakan informasi lengkap, akurat, dan terkini mengenai wisata,
+        budaya, dan event lokal.
+      </p>
+<p>
+        Tim pengembang terdiri dari pecinta wisata yang ingin mengenalkan
+        keindahan Pacitan kepada dunia.
+      </p>
+</section>
+<!-- Contact Section -->
+<section class="section" id="contact">
+<h2>Kontak</h2>
+<form id="contactForm">
+<input id="contactName" placeholder="Nama Anda" required="" type="text"/>
+<input id="contactEmail" placeholder="Email" required="" type="email"/>
+<textarea id="contactMessage" placeholder="Pesan" required=""></textarea>
+<button type="submit">Kirim</button>
+</form>
+</section>
+<!-- Destination Details Modal (hidden by default) -->
+<div class="modal hidden" id="modal">
+<div class="modal-content">
+<span class="close" id="modalClose">×</span>
+<div id="modalBody"></div>
+</div>
+</div>
+<!-- Scripts -->
+<script src="script.js"></script>
+
+<script>
+// Data for destinations
+const destinations = [
+  {
+    id: 1,
+    name: 'Pantai Klayar',
+    category: 'Pantai',
+    address: 'Desa Kalak, Donorojo, Pacitan',
+    lat: -8.1405,
+    lng: 111.1169,
+    price: 'Rp 10.000',
+    hours: '07:00 - 18:00',
+    facilities: ['Parkir', 'Warung', 'Toilet'],
+    images: ['https://images.unsplash.com/photo-1547097460-54835bd36e4c?auto=format&fit=crop&w=800&q=60'],
+    description:
+      'Pantai dengan pasir putih, batu karang unik dan ombak menakjubkan. Cocok untuk menikmati matahari terbenam.',
+    reviews: [
+      { rating: 5, comment: 'Sangat indah!' },
+      { rating: 4, comment: 'Pantai bersih dan keren' },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Goa Gong',
+    category: 'Goa',
+    address: 'Bomo, Punung, Pacitan',
+    lat: -8.1118,
+    lng: 110.9885,
+    price: 'Rp 20.000',
+    hours: '08:00 - 16:00',
+    facilities: ['Parkir', 'Penerangan', 'Pemandu'],
+    images: ['https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=60'],
+    description:
+      'Goa kapur yang memiliki stalaktit dan stalakmit menakjubkan. Dijuluki goa terindah di Asia Tenggara.',
+    reviews: [
+      { rating: 5, comment: 'Stalaktitnya menakjubkan!' },
+      { rating: 4, comment: 'Pemandu sangat informatif' },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Air Terjun Banyu Tibo',
+    category: 'Air Terjun',
+    address: 'Widoro, Donorojo, Pacitan',
+    lat: -8.1277,
+    lng: 111.1128,
+    price: 'Rp 5.000',
+    hours: '07:00 - 17:00',
+    facilities: ['Parkir', 'Warung'],
+    images: ['https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=60'],
+    description:
+      'Air terjun yang mengalir langsung ke laut dengan pemandangan yang eksotis.',
+    reviews: [
+      { rating: 5, comment: 'Destinasi favorit keluarga!' },
+      { rating: 4, comment: 'Akses sedikit menantang tapi sepadan' },
+    ],
+  },
+  {
+    id: 4,
+    name: 'Museum Karst',
+    category: 'Budaya',
+    address: 'Gebangharjo, Pracimantoro, Wonogiri (batas Pacitan)',
+    lat: -8.192,
+    lng: 110.876,
+    price: 'Rp 15.000',
+    hours: '08:00 - 16:00',
+    facilities: ['Parkir', 'Museum', 'Pemandu'],
+    images: ['https://images.unsplash.com/photo-1583241808712-7d2631250f58?auto=format&fit=crop&w=800&q=60'],
+    description:
+      'Museum yang menampilkan informasi tentang kawasan karst Pacitan dan sekitarnya. Edukatif dan menarik.',
+    reviews: [
+      { rating: 4, comment: 'Sangat informatif' },
+      { rating: 4, comment: 'Cocok untuk wisata edukasi' },
+    ],
+  },
+];
+
+// Data for events
+const events = [
+  {
+    title: 'Festival Rontek Pacitan',
+    date: '20 Agustus 2025',
+    location: 'Alun-Alun Pacitan',
+    description:
+      'Festival musik tradisional rontek yang diadakan setiap tahun menampilkan parade drum khas Pacitan.',
+  },
+  {
+    title: 'Pacitan Beach Carnival',
+    date: '15 September 2025',
+    location: 'Pantai Teleng Ria',
+    description:
+      'Karnaval budaya dan musik di tepi pantai menampilkan tarian dan kuliner khas.',
+  },
+  {
+    title: 'Lomba Surfing Klayar',
+    date: '10 Oktober 2025',
+    location: 'Pantai Klayar',
+    description:
+      'Kompetisi selancar yang diikuti peselancar profesional dan amatir dari berbagai daerah.',
+  },
+];
+
+// Initialize slider
+function initSlider() {
+  const slider = document.getElementById('slider');
+  // choose featured destinations: first 3
+  const featured = destinations.slice(0, 3);
+  featured.forEach((dest, index) => {
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    if (index === 0) slide.classList.add('active');
+    slide.style.backgroundImage = `url(${dest.images[0]})`;
+    const overlay = document.createElement('div');
+    overlay.className = 'slide-overlay';
+    overlay.innerHTML = `<h3>${dest.name}</h3><p>${dest.description.substring(
+      0,
+      80
+    )}...</p>`;
+    slide.appendChild(overlay);
+    slider.appendChild(slide);
+  });
+  // auto rotate slides
+  let currentIndex = 0;
+  setInterval(() => {
+    const slides = document.querySelectorAll('.slide');
+    slides[currentIndex].classList.remove('active');
+    currentIndex = (currentIndex + 1) % slides.length;
+    slides[currentIndex].classList.add('active');
+  }, 5000);
+}
+
+// Generate destination cards
+function createDestCards(listElement, data) {
+  listElement.innerHTML = '';
+  data.forEach((dest) => {
+    const card = document.createElement('div');
+    card.className = 'dest-card';
+    const img = document.createElement('img');
+    img.src = dest.images[0];
+    const content = document.createElement('div');
+    content.className = 'content';
+    const title = document.createElement('h3');
+    title.textContent = dest.name;
+    const cat = document.createElement('p');
+    cat.textContent = dest.category;
+    content.appendChild(title);
+    content.appendChild(cat);
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    // details button
+    const detailsBtn = document.createElement('button');
+    detailsBtn.textContent = 'Detail';
+    detailsBtn.addEventListener('click', () => {
+      showDestinationDetails(dest.id);
+    });
+    // favourite button
+    const favBtn = document.createElement('button');
+    favBtn.className = 'favorite';
+    favBtn.textContent = isFavourite(dest.id) ? 'Hapus Favorit' : 'Favorit';
+    favBtn.addEventListener('click', () => {
+      toggleFavourite(dest.id);
+      // update button text after toggle
+      favBtn.textContent = isFavourite(dest.id)
+        ? 'Hapus Favorit'
+        : 'Favorit';
+      updateFavList();
+    });
+    actions.appendChild(detailsBtn);
+    actions.appendChild(favBtn);
+    card.appendChild(img);
+    card.appendChild(content);
+    card.appendChild(actions);
+    listElement.appendChild(card);
+  });
+  if (data.length === 0) {
+    listElement.innerHTML = '<p>Tidak ada destinasi yang cocok.</p>';
+  }
+}
+
+// Filter and display destinations based on search and category
+function filterDestinations() {
+  const searchValue = document
+    .getElementById('destSearchInput')
+    .value.toLowerCase();
+  const categoryValue = document.getElementById('categoryFilter').value;
+  const filtered = destinations.filter((dest) => {
+    const matchName = dest.name.toLowerCase().includes(searchValue);
+    const matchCat =
+      categoryValue === 'all' || dest.category === categoryValue;
+    return matchName && matchCat;
+  });
+  const destList = document.getElementById('destList');
+  createDestCards(destList, filtered);
+}
+
+// Display categories as cards
+function initCategoryCards() {
+  const categories = [
+    { name: 'Pantai', description: 'Menikmati keindahan pantai dan laut' },
+    { name: 'Goa', description: 'Jelajahi goa menakjubkan' },
+    { name: 'Air Terjun', description: 'Segarkan diri di air terjun' },
+    { name: 'Budaya', description: 'Wisata budaya dan sejarah' },
+  ];
+  const container = document.getElementById('categoryCards');
+  categories.forEach((cat) => {
+    const card = document.createElement('div');
+    card.className = 'category-card';
+    const img = document.createElement('img');
+    // Use placeholder images from unsplash with query keywords
+    img.src = `https://source.unsplash.com/400x300/?${encodeURIComponent(
+      cat.name
+    )}`;
+    const content = document.createElement('div');
+    content.className = 'content';
+    const h3 = document.createElement('h3');
+    h3.textContent = cat.name;
+    const p = document.createElement('p');
+    p.textContent = cat.description;
+    content.appendChild(h3);
+    content.appendChild(p);
+    card.appendChild(img);
+    card.appendChild(content);
+    card.addEventListener('click', () => {
+      // set filter and scroll to destinations section
+      document.getElementById('categoryFilter').value = cat.name;
+      filterDestinations();
+      document.getElementById('destinations').scrollIntoView({
+        behavior: 'smooth',
+      });
+    });
+    container.appendChild(card);
+  });
+}
+
+// Modal for destination details
+function showDestinationDetails(id) {
+  const dest = destinations.find((d) => d.id === id);
+  if (!dest) return;
+  const modal = document.getElementById('modal');
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = '';
+  const title = document.createElement('h3');
+  title.textContent = dest.name;
+  const img = document.createElement('img');
+  img.src = dest.images[0];
+  img.style.width = '100%';
+  img.style.maxHeight = '200px';
+  img.style.objectFit = 'cover';
+  const desc = document.createElement('p');
+  desc.textContent = dest.description;
+  const info = document.createElement('p');
+  info.innerHTML = `<strong>Alamat:</strong> ${dest.address}<br>
+    <strong>Harga tiket:</strong> ${dest.price}<br>
+    <strong>Jam buka:</strong> ${dest.hours}<br>
+    <strong>Fasilitas:</strong> ${dest.facilities.join(', ')}`;
+  // Reviews list
+  const reviewContainer = document.createElement('div');
+  reviewContainer.innerHTML = '<h4>Ulasan:</h4>';
+  dest.reviews.forEach((rev) => {
+    const div = document.createElement('div');
+    div.innerHTML = `<strong>Rating:</strong> ${rev.rating}/5 - ${rev.comment}`;
+    reviewContainer.appendChild(div);
+  });
+  // Add review form
+  const reviewForm = document.createElement('form');
+  reviewForm.innerHTML = `
+    <h4>Tambah Ulasan</h4>
+    <label>Rating (1-5): <input type="number" id="ratingInput" min="1" max="5" required></label><br>
+    <label>Komentar:<br><textarea id="commentInput" required></textarea></label><br>
+    <button type="submit">Kirim Ulasan</button>
+  `;
+  reviewForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ratingVal = parseInt(
+      reviewForm.querySelector('#ratingInput').value,
+      10
+    );
+    const commentVal = reviewForm.querySelector('#commentInput').value;
+    if (ratingVal && commentVal) {
+      dest.reviews.push({ rating: ratingVal, comment: commentVal });
+      showDestinationDetails(id);
+    }
+  });
+  modalBody.appendChild(title);
+  modalBody.appendChild(img);
+  modalBody.appendChild(desc);
+  modalBody.appendChild(info);
+  modalBody.appendChild(reviewContainer);
+  modalBody.appendChild(reviewForm);
+  modal.classList.remove('hidden');
+}
+
+function closeModal() {
+  const modal = document.getElementById('modal');
+  modal.classList.add('hidden');
+}
+
+// Favourites in localStorage
+function getFavourites() {
+  const fav = localStorage.getItem('favourites');
+  return fav ? JSON.parse(fav) : [];
+}
+
+function isFavourite(id) {
+  return getFavourites().includes(id);
+}
+
+function toggleFavourite(id) {
+  let favs = getFavourites();
+  if (favs.includes(id)) {
+    favs = favs.filter((fid) => fid !== id);
+  } else {
+    favs.push(id);
+  }
+  localStorage.setItem('favourites', JSON.stringify(favs));
+}
+
+function updateFavList() {
+  const favIds = getFavourites();
+  const favDest = destinations.filter((d) => favIds.includes(d.id));
+  const favList = document.getElementById('favList');
+  createDestCards(favList, favDest);
+}
+
+// Initialize map
+function initMap() {
+  const map = L.map('map').setView([-8.1305, 111.0952], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+  }).addTo(map);
+  destinations.forEach((dest) => {
+    const marker = L.marker([dest.lat, dest.lng]).addTo(map);
+    marker.bindPopup(
+      `<strong>${dest.name}</strong><br>${dest.address}<br><button onclick="openDestFromMap(${dest.id})">Detail</button>`
+    );
+  });
+}
+
+// Called when clicking detail from map popup
+function openDestFromMap(id) {
+  showDestinationDetails(id);
+  // Scroll to top? show modal automatically; modal is overlay.
+}
+
+// Initialize events list
+function initEvents() {
+  const container = document.getElementById('eventList');
+  container.innerHTML = '';
+  events.forEach((ev) => {
+    const card = document.createElement('div');
+    card.className = 'event-card';
+    card.innerHTML = `<h3>${ev.title}</h3><p><strong>Tanggal:</strong> ${
+      ev.date
+    }<br><strong>Lokasi:</strong> ${ev.location}</p><p>${ev.description}</p>`;
+    container.appendChild(card);
+  });
+}
+
+// Handle contact form submission
+function initContactForm() {
+  const form = document.getElementById('contactForm');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('contactName').value;
+    const email = document.getElementById('contactEmail').value;
+    const message = document.getElementById('contactMessage').value;
+    alert(
+      `Terima kasih, ${name}! Pesan Anda telah kami terima dan akan segera ditindaklanjuti.`
+    );
+    form.reset();
+  });
+}
+
+// Register service worker for offline caching
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('service-worker.js')
+        .catch((err) => console.log('SW registration failed', err));
+    });
+  }
+}
+
+// Set up event listeners
+function initListeners() {
+  document
+    .getElementById('categoryFilter')
+    .addEventListener('change', filterDestinations);
+  document
+    .getElementById('destSearchInput')
+    .addEventListener('input', filterDestinations);
+  document
+    .getElementById('quickSearchBtn')
+    .addEventListener('click', () => {
+      const val = document
+        .getElementById('quickSearchInput')
+        .value.toLowerCase();
+      document.getElementById('destSearchInput').value = val;
+      document.getElementById('categoryFilter').value = 'all';
+      filterDestinations();
+      document.getElementById('destinations').scrollIntoView({
+        behavior: 'smooth',
+      });
+    });
+  // Modal close
+  document
+    .getElementById('modalClose')
+    .addEventListener('click', closeModal);
+  // Close modal when clicking outside content
+  document.getElementById('modal').addEventListener('click', (e) => {
+    if (e.target.id === 'modal') {
+      closeModal();
+    }
+  });
+}
+
+// Initialize everything after DOM loaded
+document.addEventListener('DOMContentLoaded', () => {
+  initSlider();
+  filterDestinations();
+  initCategoryCards();
+  updateFavList();
+  initMap();
+  initEvents();
+  initContactForm();
+  initListeners();
+  registerServiceWorker();
+});
+
+</script>
+</body>
+</html>
